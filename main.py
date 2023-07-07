@@ -24,6 +24,7 @@ async def ping(ip):
         stderr=subprocess.PIPE)
     await result.communicate()
 
+# CODE SMELL: Hardcoding a subnet.
 async def ping_subnet():
     """Ping every IP address on the 172.16.0.0/24 subnet"""
     await asyncio.sleep(1.0)
@@ -34,12 +35,13 @@ async def ping_subnet():
     await asyncio.gather(*tasks)
 
 
-async def shutdown(signal_name, loop):
+async def shutdown(signal_name, loop, pipe):
     """Cleanup tasks tied to the service's shutdown."""
     print(f"Received exit signal {signal_name}...")
     tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
 
-    [task.cancel() for task in tasks]
+    for task in tasks:
+        task.cancel()
 
     print(f"Cancelling {len(tasks)} tasks")
     await asyncio.gather(*tasks, return_exceptions=True)
@@ -61,10 +63,10 @@ async def publish_mac_addresses():
         r"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(\.\d{1,5})?)?")
 
     loop = asyncio.get_event_loop()
-    for signame in {'SIGINT', 'SIGTERM'}:
+    for signame in ['SIGINT', 'SIGTERM']:
         loop.add_signal_handler(
             getattr(signal, signame),
-            lambda: asyncio.create_task(shutdown(signame, loop)))
+            lambda signame=signame: asyncio.create_task(shutdown(signame, loop, pipe)))
 
     while True:
         line = await pipe.stdout.readline()

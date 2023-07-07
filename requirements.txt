@@ -3,3 +3,5 @@ fastapi
 mac_vendor_lookup
 pydantic
 uvicorn
+pyzmq
+aiozmq

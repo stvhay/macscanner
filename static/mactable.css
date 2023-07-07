@@ -1,9 +1,43 @@
+body {
+    background-color: #2e2e2e;
+    color: #b3b3b3;
+    font-family: "Courier New", Courier, monospace;
+}
+
+a {
+    color: #b3b3b3;
+}
+
+a:hover {
+    color: #e6e6e6;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
 }
 
 th, td {
-    border: 1px solid #ddd;
+    border: 1px solid #4d4d4d;
     padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #404040;
+}
+
+tr:nth-child(odd) {
+    background-color: #333333;
+}
+
+td:first-child {
+    width: 12em;
+}
+
+td:nth-child(2) {
+    width: 12em;
+}
+
+td:nth-child(3) {
+    width: 30em;
 }

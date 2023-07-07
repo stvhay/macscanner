@@ -1,14 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 
 echo "Checking for .venv directory..."
-if [[ ! -d ".venv" ]]; then
+if [ ! -d ".venv" ]; then
     echo ".venv directory not found."
     rm -rf .venv
     python -m venv .venv
 fi
 
 echo "Checking file .deps to see if dependencies have been installed..."
-if [[ ! -f ".venv/.macscanner_deps" ]]; then
+if [ ! -f ".venv/.macscanner_deps" ]; then
     echo "Installing dependencies..."
     .venv/bin/pip install -U pip wheel setuptools
     .venv/bin/pip install -r requirements.txt
@@ -18,4 +18,4 @@ if [[ ! -f ".venv/.macscanner_deps" ]]; then
 fi
 
 echo "Launching web application"
-.venv/bin/uvicorn main:app --reload || ( deactivate; exit 1 )
+.venv/bin/uvicorn main:app --reload

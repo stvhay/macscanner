@@ -17,5 +17,8 @@ if [ ! -f ".venv/.macscanner_deps" ]; then
     echo "---------------------------------------------"
 fi
 
+echo "Starting MAC address publisher"
+.venv/bin/python publish.py &
+sleep 1.0
 echo "Launching web application"
 .venv/bin/uvicorn main:app --reload

@@ -60,3 +60,22 @@ function sortTable() {
     content.innerHTML = '';
     rows.forEach((tr) => content.appendChild(tr));
 }
+
+function pingNetwork() {
+    var network = document.getElementById('network').value;
+    // Check for valid IPv4 network format
+    var pattern = new RegExp('^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$');
+    if(pattern.test(network)){
+        var xhr = new XMLHttpRequest();
+        document.getElementById('result').innerText = "Pinging " + network + "...";
+        xhr.open("POST", '/ping', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function () {
+            document.getElementById('result').innerText = JSON.parse(this.responseText)['message'];
+        };
+        xhr.send(JSON.stringify({"network": network}));
+    } else {
+        alert("Invalid IPv4 network");
+    }
+}
+

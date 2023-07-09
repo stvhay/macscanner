@@ -1,0 +1,1 @@
+sudo /opt/homebrew/opt/dnsmasq/sbin/dnsmasq --keep-in-foreground --conf-file=dnsmasq.conf

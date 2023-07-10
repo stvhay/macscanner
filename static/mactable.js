@@ -56,10 +56,30 @@ source.onmessage = function (event) {
 
 function sortTable() {
     const rows = Array.from(content.getElementsByTagName('tr'))
-        .sort((row1, row2) => row1.cells[0].innerHTML.localeCompare(row2.cells[0].innerHTML));
+        .sort((row1, row2) => {
+            // Split each IP into its octets
+            let ip1 = row1.cells[1].innerHTML.split(".");
+            let ip2 = row2.cells[1].innerHTML.split(".");
+            
+            // Compare each octet
+            for (let i = 0; i < 4; i++) {
+                let octet1 = Number(ip1[i]);
+                let octet2 = Number(ip2[i]);
+
+                if (octet1 > octet2) {
+                    return 1;
+                } else if (octet1 < octet2) {
+                    return -1;
+                }
+            }
+
+            // If all octets are equal, the IPs are equal
+            return 0;
+        });
     content.innerHTML = '';
     rows.forEach((tr) => content.appendChild(tr));
 }
+
 
 function pingNetwork() {
     var network = document.getElementById('network').value;

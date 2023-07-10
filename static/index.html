@@ -9,9 +9,20 @@
 <body>
     <h1>MAC Address Stream</h1>
     <div>
-        <label for="network">Enter an IPv4 network:</label>
-        <input type="text" id="network" name="network">
-        <button onclick="pingNetwork()">Ping</button>
+        <div class="input-group">
+            <label for="interface">Enter an interface:</label>
+            <input type="text" id="interface" name="interface">
+            <button onclick="startPublisher()">Start Publisher</button>
+        </div>
+        <div class="input-group">
+            <label for="timeout">Enter how long tcpdump should run, in seconds:</label>
+            <input type="text" id="timeout" name="timeout" value="10">
+        </div>
+        <div class="input-group">
+            <label for="network">Enter an IPv4 network:</label>
+            <input type="text" id="network" name="network">
+            <button onclick="pingNetwork()">Ping</button>
+        </div>
         <div id="result"></div>
     </div>
     <table id="table">

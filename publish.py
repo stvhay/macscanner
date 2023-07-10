@@ -1,3 +1,5 @@
+"""This module runs tcpdump on an interface and publishes the output to a ZMQ PUB socket."""
+import argparse
 import asyncio
 import re
 import signal
@@ -20,10 +22,10 @@ async def shutdown(signal_name, loop, pipe):
     loop.stop()
 
 
-async def publish_mac_addresses():
+async def publish_mac_addresses(interface: str, bind='tcp://0.0.0.0:5556'):
     """Stream Mac Addresses and IP Addresses"""
-    zmq_socket = await aiozmq.create_zmq_stream(zmq.PUB, bind='tcp://0.0.0.0:5556')
-    pipe = await asyncio.create_subprocess_shell('tcpdump -l -i en0 -n -e',
+    zmq_socket = await aiozmq.create_zmq_stream(zmq.PUB, bind=bind)
+    pipe = await asyncio.create_subprocess_shell(f'tcpdump -l -i {interface} -n -e',
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
@@ -63,4 +65,12 @@ async def publish_mac_addresses():
         seq += 1
 
 if __name__ == '__main__':
-    asyncio.run(publish_mac_addresses())
+
+    parser = argparse.ArgumentParser(description="Publishes tcpdump data to a ZMQ PUB socket.")
+    parser.add_argument("--interface", type=str, required=True, 
+                        help="Interface to listen on. For example: eth0, wlan0 etc.")
+    parser.add_argument("--zmq-bind-address", type=str, default='tcp://0.0.0.0:5556',
+                        help="ZMQ bind address. Default is tcp://0.0.0.0:5556")
+    args = parser.parse_args()
+
+    asyncio.run(publish_mac_addresses(args.interface, args.zmq_bind_address))

@@ -11,15 +11,62 @@ from pydantic import BaseModel
 import aiozmq
 import zmq
 
+
 class Subnet(BaseModel):
     """Defines a basic IPV4 subnet model as a string."""
     network: str
 
-zmq_context = zmq.Context()
 
-async def ping(ip):
+class PublishParams(BaseModel):
+    """Defines a basic IPV4 subnet model as a string."""
+    interface: str
+    timeout: int=300
+
+
+class Publisher:
+    """This class manages the process that is publishing to the zmq socket."""
+    process = None
+    timeout_task = None
+
+    @classmethod
+    async def publish(cls, params:PublishParams):
+        """Run the tcpdump publisher for the given subnet."""
+
+        if cls.process:
+            cls.stop()
+        cls.process = await asyncio.create_subprocess_exec(".venv/bin/python",
+                                        "publish.py", "--interface", params.interface,
+                                        stdout=asyncio.subprocess.PIPE,
+                                        stderr=asyncio.subprocess.PIPE)
+        cls.timeout_task = asyncio.create_task(cls.stop_after_timeout(params.timeout))
+
+    @classmethod
+    async def stop_after_timeout(cls, timeout):
+        """Stop publisher after a given timeout."""
+        await asyncio.sleep(timeout)
+        if cls.process is not None:
+            await cls.stop()
+
+    @classmethod
+    async def stop(cls):
+        """Stop the publisher."""
+        if cls.timeout_task is not None:
+            cls.timeout_task.cancel()
+            cls.timeout_task = None
+        if cls.process:
+            try:
+                cls.process.terminate()
+                await cls.process.wait()
+            except ProcessLookupError:
+                print("The process has already been terminated.")
+            finally:
+                cls.process = None
+
+
+
+async def ping(ip_addr):
     """Ping an IP address"""
-    result = await asyncio.create_subprocess_shell(f"ping -c 1 {ip}",
+    result = await asyncio.create_subprocess_shell(f"ping -c 1 {ip_addr}",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     await result.communicate()
@@ -36,29 +83,22 @@ async def stream_mac_addresses():
     socket = await aiozmq.create_zmq_stream(zmq.SUB, connect='tcp://localhost:5556')
     socket.transport.setsockopt(zmq.SUBSCRIBE, b"")
 
-    print("Streaming...")
     last_seq = None
     while True:
         messages = await socket.read()
         for raw_message in messages:
-            mac, ip, seq = raw_message.decode('utf-8').split(',')
+            mac, ip_addr, seq = raw_message.decode('utf-8').split(',')
             seq = int(seq)
             if last_seq is not None and last_seq != seq - 1:
                 print("Dropped message.")
             last_seq = seq
-            yield f"data: {mac},{ip}\n\n"
+            yield f"data: {mac},{ip_addr}\n\n"
 
+
+zmq_context = zmq.Context()
+maclookup = AsyncMacLookup()
 
 app = FastAPI()
-
-
-maclookup = AsyncMacLookup()
-# @app.on_event("startup")
-# async def startup_event():
-#     """Retrieve updated MAC address prefixes and start the mac address stream"""
-#     asyncio.create_task(publish_mac_addresses())
-
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -83,9 +123,17 @@ async def get_mac_vendor(mac: str):
         vendor = ""
     return {"vendor": vendor}
 
+
 @app.post("/ping")
 async def ping_network(subnet: Subnet):
     """Pings a subnet to generate packets that tell you where devices are."""
-    print(subnet)
     await ping_subnet(subnet.network)
     return {"message": f"Ping requests sent for subnet: {subnet.network}"}
+
+
+@app.post("/publish")
+async def publish(params: PublishParams):
+    """Runs the tcpdump publisher.py in a separate process."""    
+    # If a process is already running, terminate it.
+    await Publisher.publish(params)
+    return {"message": f"Started publish.py with interface {params.interface}"}

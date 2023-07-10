@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# Check some system depdendencies
+echo "Checking for ping command..."
+[ $(command -v ping) ] || echo "No ping installed."
+
+echo "Checking for ping command..."
+[ $(command -v tcpdump) ] || echo "No tcpdump installed."
+
+# Ensure the venv has been made
 echo "Checking for .venv directory..."
 if [ ! -d ".venv" ]; then
     echo ".venv directory not found."
@@ -17,8 +25,6 @@ if [ ! -f ".venv/.macscanner_deps" ]; then
     echo "---------------------------------------------"
 fi
 
-echo "Starting MAC address publisher"
-.venv/bin/python publish.py &
-sleep 1.0
+# Finally launch the application
 echo "Launching web application"
 .venv/bin/uvicorn main:app --reload

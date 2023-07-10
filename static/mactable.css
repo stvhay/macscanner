@@ -41,3 +41,18 @@ td:nth-child(2) {
 td:nth-child(3) {
     width: 30em;
 }
+
+.input-group {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    margin-bottom: 10px;
+}
+
+.input-group label {
+    width: 300px;
+}
+
+.input-group input {
+    margin-right: 10px;
+}

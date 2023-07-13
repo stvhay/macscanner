@@ -10,6 +10,12 @@ async function getVendor(mac) {
     return data.vendor;
 }
 
+async function getSystem(mac) {
+    const response = await fetch(`/system/${mac}`);
+    const data = await response.json();
+    return data.system;
+}
+
 async function processQueue() {
     while (queue.length > 0) {
         const event = queue.shift();
@@ -28,15 +34,19 @@ async function processQueue() {
             const macCell = document.createElement('td');
             const ipCell = document.createElement('td');
             const vendorCell = document.createElement('td');
+            const systemCell = document.createElement('td');
 
             macCell.innerText = mac;
             ipCell.innerText = ip;
             const vendor = await getVendor(mac);
             vendorCell.innerText = vendor; // Use await here to ensure the vendor data is fetched before it's added to the table.
+            const system = await getSystem(mac);
+            systemCell.innerText = system; // Use await here to ensure the vendor data is fetched before it's added to the table.
 
             row.appendChild(macCell);
             row.appendChild(ipCell);
             row.appendChild(vendorCell);
+            row.appendChild(systemCell);
 
             content.appendChild(row);
             seenMacs.set(mac, [ip, row]);

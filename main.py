@@ -1,6 +1,7 @@
 """Stream Mac addresses"""
 import asyncio
 from ipaddress import IPv4Network
+import json
 import subprocess
 
 from fastapi import FastAPI
@@ -11,6 +12,8 @@ from pydantic import BaseModel
 import aiozmq
 import zmq
 
+
+SYSTEMS = json.load(open("systems.json", 'r'))
 
 class Subnet(BaseModel):
     """Defines a basic IPV4 subnet model as a string."""
@@ -35,7 +38,8 @@ class Publisher:
         if cls.process:
             cls.stop()
         cls.process = await asyncio.create_subprocess_exec(".venv/bin/python",
-                                        "publish.py", "--interface", params.interface,
+                                        "publish.py", 
+                                        "--interface", params.interface,
                                         stdout=asyncio.subprocess.PIPE,
                                         stderr=asyncio.subprocess.PIPE)
         cls.timeout_task = asyncio.create_task(cls.stop_after_timeout(params.timeout))
@@ -122,6 +126,15 @@ async def get_mac_vendor(mac: str):
     except VendorNotFoundError:
         vendor = ""
     return {"vendor": vendor}
+
+
+@app.get("/system/{mac}")
+async def get_mac_vendor(mac: str):
+    """Handler to get the MAC vendor"""
+    lookup = SYSTEMS.get(mac[0:8], None)
+    if lookup:
+        return {"system": lookup}
+    return {"system": ""}
 
 
 @app.post("/ping")

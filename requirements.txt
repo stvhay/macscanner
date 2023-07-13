@@ -1,3 +1,4 @@
+aioping
 fastapi
 httpx
 mac_vendor_lookup

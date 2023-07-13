@@ -4,6 +4,7 @@ from ipaddress import IPv4Network
 import json
 import subprocess
 
+import aioping
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -67,18 +68,18 @@ class Publisher:
                 cls.process = None
 
 
-
-async def ping(ip_addr):
+async def ping_ip(ip_addr):
     """Ping an IP address"""
-    result = await asyncio.create_subprocess_shell(f"ping -c 1 {ip_addr}",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
-    await result.communicate()
+    try:
+        delay = await aioping.ping(ip_addr, timeout=1)
+        return delay
+    except TimeoutError:
+        return None
 
 async def ping_subnet(subnet: str):
     """Ping every IP address on the specified subnet"""
     network = IPv4Network(subnet)
-    tasks = [ping(str(ip)) for ip in network.hosts()]
+    tasks = [ping_ip(str(ip)) for ip in network.hosts()]
     await asyncio.gather(*tasks)
 
 
